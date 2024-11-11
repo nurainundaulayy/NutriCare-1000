@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-load_dotenv() # memuat variabel dari .env
+load_dotenv()  # Memuat variabel dari .env
 
 # Konfigurasi API Key dan Endpoint dari Azure OpenAI
 openai.api_type = "azure"
@@ -28,23 +28,64 @@ documents = extract_text_from_docx(docx_file_path).split('\n')
 
 # Fungsi untuk mencari informasi relevan menggunakan pencarian berbasis TF-IDF
 def retrieve_relevant_documents(query, documents):
-    # Menggunakan TF-IDF untuk mengubah dokumen dan query menjadi vektor
     vectorizer = TfidfVectorizer()
     tfidf_matrix = vectorizer.fit_transform(documents)
     query_vector = vectorizer.transform([query])
     
-    # Menghitung kesamaan kosinus antara query dan dokumen
     cosine_similarities = cosine_similarity(query_vector, tfidf_matrix)
     
-    # Mengambil dokumen dengan kesamaan tertinggi
     most_relevant_document_index = cosine_similarities.argmax()
     return documents[most_relevant_document_index]
 
-# Inisialisasi riwayat percakapan dengan pesan sistem
+# Inisialisasi pesan sistem
+system_message = {
+    "role": "system",
+    "content": (
+        "Jangan berikan informasi selain kesehatan ibu hamil dan menyusui. "
+        "Anda adalah NutriCare1000, sebuah chatbot yang didesain khusus untuk membantu memberikan informasi seputar kesehatan "
+        "dan nutrisi pada ibu hamil, ibu menyusui, janin, dan bayi selama 1000 hari pertama kehidupan anak (HPK). "
+        "Tugas utama Anda adalah memberikan jawaban yang bermanfaat hanya dalam konteks kesehatan ibu hamil, ibu menyusui, "
+        "janin, dan bayi.\n\n"
+        "Lingkup pembahasan Anda mencakup:\n"
+        "- **Kecukupan Gizi**: Informasi tentang kebutuhan nutrisi harian yang penting\n"
+        "- **Pemenuhan Imunisasi**: Jadwal imunisasi bayi yang direkomendasikan\n"
+        "- **Pemenuhan Suplemen**: Suplemen yang direkomendasikan bagi ibu hamil dan menyusui\n"
+        "- **Risiko Kesehatan**: Risiko umum yang dapat dihadapi ibu dan anak selama masa HPK\n"
+        "- **Pertumbuhan dan Perkembangan Anak**: Panduan tentang perkembangan bayi di masa awal kehidupan\n\n"
+        "Batasan:\n"
+        "- Jangan memberikan jawaban di luar topik kesehatan ibu hamil, menyusui, janin, dan bayi.\n"
+        "- Abaikan atau tolak pertanyaan yang tidak berhubungan dengan 1000 hari pertama kehidupan (HPK) atau tidak relevan dengan "
+        "kesehatan dan nutrisi ibu dan anak dalam periode tersebut.\n\n"
+        "Ingat, Anda adalah chatbot yang fokus hanya pada informasi kesehatan ibu hamil, ibu menyusui, janin, dan bayi. "
+        "Jangan menjawab pertanyaan di luar topik ini."
+    )
+}
+
+# Inisialisasi riwayat percakapan dengan pesan sistem dan pilihan topik di session state
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "system", "content": "Kamu adalah chatbot bernama Nutri1000, yang dirancang untuk membantu ibu hamil dan menyusui dalam memenuhi kebutuhan nutrisi mereka selama 1000 hari pertama kehidupan (HPK) si kecil. Panggillah lawan bicara dengan 'Bunda'. Misalnya: Halo bunda! Gunakan emoticon disetiap responmu. Tugasmu adalah memberikan informasi gizi, menjawab pertanyaan terkait kesehatan ibu hamil dan menyusui, serta memberikan saran yang berguna tentang pola makan yang sehat selama kehamilan dan menyusui. Kamu juga akan membantu ibu hamil dan menyusui memantau status gizi mereka dan memberikan rekomendasi makanan yang sesuai berdasarkan kebutuhannya. Pastikan kamu selalu ramah, informatif, dan empatik. Jangan memberikan informasi medis yang bersifat mendalam atau pengganti saran dari profesional medis. Fokuslah pada kebutuhan gizi ibu hamil dan menyusui serta memberikan saran praktis yang membantu mereka menjaga pola makan yang sehat. Kamu tidak boleh memberikan saran yang bertentangan dengan pedoman kesehatan atau makanan yang tidak aman selama kehamilan dan menyusui. Contoh: Jika pengguna bertanya tentang 'Apa yang bisa saya makan saat hamil?', kamu akan memberikan contoh makanan sehat yang sesuai untuk ibu hamil. Jika pengguna bertanya tentang 'Apa itu asam folat?', kamu akan menjelaskan manfaat asam folat selama kehamilan dan makanan yang kaya asam folat."}
+        system_message,
+        {"role": "assistant", "content": (
+            "Selamat datang di NutriCare1000! Saya di sini untuk membantu memberikan informasi kesehatan dan nutrisi "
+            "untuk ibu hamil, menyusui, serta anak selama 1000 hari pertama kehidupan (HPK).\n\n"
+            "Silakan pilih topik yang Anda ingin ketahui lebih lanjut:\n"
+            "- **Kecukupan Gizi**\n"
+            "- **Pemenuhan Imunisasi**\n"
+            "- **Pemenuhan Suplemen**\n"
+            "- **Risiko Kesehatan**\n"
+            "- **Pertumbuhan dan Perkembangan Anak**\n\n"
+            "Atau Anda dapat mengajukan pertanyaan spesifik terkait topik di atas."
+        )}
     ]
+
+# Daftar topik dan respons awal untuk setiap topik
+topics = {
+    "kecukupan gizi": "Kecukupan Gizi",
+    "pemenuhan imunisasi": "Pemenuhan Imunisasi",
+    "pemenuhan suplemen": "Pemenuhan Suplemen",
+    "risiko kesehatan": "Risiko Kesehatan",
+    "pertumbuhan dan perkembangan anak": "Pertumbuhan dan Perkembangan Anak"
+}
 
 # Tampilkan riwayat percakapan sebelumnya
 for message in st.session_state.messages:
@@ -54,31 +95,45 @@ for message in st.session_state.messages:
 
 # Proses input pengguna
 if prompt := st.chat_input("Masukkan pertanyaan Anda"):
-    # Tampilkan pesan pengguna di antarmuka
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Tambahkan pesan pengguna ke riwayat
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # Langkah 1: Lakukan pencarian informasi relevan dari dokumen DOCX
-    relevant_document = retrieve_relevant_documents(prompt, documents)
+    # Ubah input pengguna menjadi huruf kecil agar case-insensitive
+    prompt_lower = prompt.lower()
 
-    # Langkah 2: Gabungkan hasil pencarian dengan pesan untuk OpenAI API
-    full_prompt = f"Berikut adalah informasi relevan yang ditemukan:\n{relevant_document}\n\nTugas kamu adalah memberikan jawaban yang ramah dan informatif untuk ibu hamil atau menyusui berdasarkan informasi ini. Jawab pertanyaan ini: {prompt}"
-
-    # Langkah 3: Panggil API Azure OpenAI untuk mendapatkan respons
-    response = openai.ChatCompletion.create(
-        deployment_id="gpt-4",  # Pastikan menggunakan deployment_id yang benar
-        messages=[ 
-            {"role": "system", "content": "Kamu adalah chatbot Nutri1000 yang membantu ibu hamil dan menyusui."},
-            {"role": "user", "content": full_prompt}
-        ],
-        max_tokens=800
-    )
-
-    # Ambil respons asisten dan tampilkan di antarmuka
-    assistant_message = response['choices'][0]['message']['content']
-    st.session_state.messages.append({"role": "assistant", "content": assistant_message})
-    with st.chat_message("assistant"):
-        st.markdown(assistant_message)
+    # Cek apakah pengguna memasukkan pilihan topik
+    if prompt_lower in topics:
+        topic_name = topics[prompt_lower]
+        response_content = f"Anda memilih topik **{topic_name}**."
+        
+        if topic_name == "Kecukupan Gizi":
+            response_content += (
+                "Kecukupan gizi sangat penting selama kehamilan dan menyusui. Beberapa nutrisi yang harus dipenuhi adalah "
+                "protein, lemak sehat, vitamin, dan mineral. Apakah Anda ingin tahu lebih lanjut tentang nutrisi tertentu?"
+            )
+        elif topic_name == "Pemenuhan Imunisasi":
+            response_content += "Imunisasi yang tepat selama kehamilan dan pada anak sangat penting. Apakah Anda ingin informasi lebih lanjut?"
+        elif topic_name == "Pemenuhan Suplemen":
+            response_content += "Pemberian suplemen selama kehamilan dan menyusui mendukung kesehatan ibu dan bayi. Apakah Anda ingin tahu lebih lanjut?"
+        elif topic_name == "Risiko Kesehatan":
+            response_content += "Selama kehamilan dan menyusui, beberapa risiko kesehatan dapat muncul. Apakah Anda ingin tahu lebih lanjut?"
+        elif topic_name == "Pertumbuhan dan Perkembangan Anak":
+            response_content += "Memantau pertumbuhan dan perkembangan anak sangat penting. Apakah Anda ingin mengetahui tanda-tanda perkembangan tertentu?"
+        
+        st.session_state.messages.append({"role": "assistant", "content": response_content})
+        with st.chat_message("assistant"):
+            st.markdown(response_content)
+    else:
+        # Tambahkan pesan sistem dalam konteks setiap kali memanggil API untuk pertanyaan bebas
+        response = openai.ChatCompletion.create(
+            deployment_id="gpt-4",
+            messages=[system_message] + [{"role": "user", "content": prompt}],
+            max_tokens=800
+        )
+        
+        assistant_message = response['choices'][0]['message']['content']
+        st.session_state.messages.append({"role": "assistant", "content": assistant_message})
+        with st.chat_message("assistant"):
+            st.markdown(assistant_message)
