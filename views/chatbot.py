@@ -10,7 +10,7 @@ load_dotenv() # memuat variabel dari .env
 
 # Konfigurasi API Key dan Endpoint dari Azure OpenAI
 openai.api_type = "azure"
-openai.api_key = os.getenv("AZURE_OPENAI_KEY")
+openai.api_key = "Adzs5iXdFibMVBIIyS4YYLRrGRID4ARastj3mRoemxZtf0o9GYx8JQQJ99AKACYeBjFXJ3w3AAABACOGxLcs"
 openai.api_base = "https://openai-coba.openai.azure.com"  # Ganti dengan endpoint Azure Anda
 openai.api_version = "2023-05-15"  # Sesuaikan versi API jika perlu
 
