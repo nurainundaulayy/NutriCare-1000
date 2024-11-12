@@ -39,7 +39,7 @@ load_dotenv()  # Memuat variabel dari .env
 #     return documents[most_relevant_document_index]
 
 endpoint = "https://openai-coba.openai.azure.com/"
-api_key = os.getenv("AZURE_OPENAI_KEY")
+api_key = "Adzs5iXdFibMVBIIyS4YYLRrGRID4ARastj3mRoemxZtf0o9GYx8JQQJ99AKACYeBjFXJ3w3AAABACOGxLcs"
 deployment = "gpt-4o-mini-nutri"
 
 client = openai.AzureOpenAI(
@@ -52,23 +52,8 @@ client = openai.AzureOpenAI(
 system_message = {
     "role": "system",
     "content": (
-        #"Jangan berikan informasi selain kesehatan ibu hamil dan menyusui. "
+        "Jangan berikan informasi selain kesehatan ibu hamil dan menyusui. "
         "Anda adalah NutriCare1000, sebuah chatbot yang didesain khusus untuk membantu memberikan informasi seputar kesehatan "
-        "dan nutrisi pada ibu hamil, ibu menyusui, janin, dan bayi selama 1000 hari pertama kehidupan anak (HPK). "
-        "Tugas utama Anda adalah memberikan jawaban yang bermanfaat hanya dalam konteks kesehatan ibu hamil, ibu menyusui, "
-        "janin, dan bayi.\n\n"
-        "Lingkup pembahasan Anda mencakup:\n"
-        "- **Kecukupan Gizi**: Informasi tentang kebutuhan nutrisi harian yang penting\n"
-        "- **Pemenuhan Imunisasi**: Jadwal imunisasi bayi yang direkomendasikan\n"
-        "- **Pemenuhan Suplemen**: Suplemen yang direkomendasikan bagi ibu hamil dan menyusui\n"
-        "- **Risiko Kesehatan**: Risiko umum yang dapat dihadapi ibu dan anak selama masa HPK\n"
-        "- **Pertumbuhan dan Perkembangan Anak**: Panduan tentang perkembangan bayi di masa awal kehidupan\n\n"
-        "Batasan:\n"
-        "- Jangan memberikan jawaban di luar topik kesehatan ibu hamil, menyusui, janin, dan bayi.\n"
-        "- Abaikan atau tolak pertanyaan yang tidak berhubungan dengan 1000 hari pertama kehidupan (HPK) atau tidak relevan dengan "
-        "kesehatan dan nutrisi ibu dan anak dalam periode tersebut.\n\n"
-        "Ingat, Anda adalah chatbot yang fokus hanya pada informasi kesehatan ibu hamil, ibu menyusui, janin, dan bayi. "
-        "Jangan menjawab pertanyaan di luar topik ini."
     )
 }
 
@@ -103,6 +88,7 @@ for message in st.session_state.messages:
     if message["role"] != "system":  # Sembunyikan pesan sistem
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+
 
 # Proses input pengguna
 if prompt := st.chat_input("Masukkan pertanyaan Anda"):
@@ -149,14 +135,14 @@ if prompt := st.chat_input("Masukkan pertanyaan Anda"):
         #     ],
         #     max_tokens=800
         # )
-
+        modified_prompt = f"{prompt}\n\n Kamu adalah NutriCare:1000 Jangan memberikan jawaban di luar topik kesehatan ibu hamil, menyusui, janin, dan bayi. Panggil aku Bunda!"
         completion = client.chat.completions.create(
             model=deployment,
             messages=[
                 #system_message,
                 {
                     "role": "user",
-                    "content": prompt,
+                    "content": modified_prompt,
                 },
             ],
             extra_body={
