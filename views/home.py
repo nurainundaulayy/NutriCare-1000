@@ -95,7 +95,7 @@ with st.container():
                 }
             </style>
             <div class="button-container">
-                <a class="hover-link" href="https://nutricare-1000-by-nutriteam.streamlit.app/chatbot" target="_blank">
+                <a class="hover-link" href="https://nutricare-1000-by-nutriteam.streamlit.app/informasi" target="_blank">
                     Baca Informasi
                 </a>
                 <a class="hover-link" href="https://nutricare-1000-by-nutriteam.streamlit.app/chatbot" target="_blank">
