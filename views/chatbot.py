@@ -39,7 +39,7 @@ load_dotenv()  # Memuat variabel dari .env
 #     return documents[most_relevant_document_index]
 
 endpoint = "https://openai-coba.openai.azure.com/"
-api_key = st.secrets["Adzs5iXdFibMVBIIyS4YYLRrGRID4ARastj3mRoemxZtf0o9GYx8JQQJ99AKACYeBjFXJ3w3AAABACOGxLcs"]
+api_key = os.getenv("AZURE_OPENAI_KEY")
 deployment = "gpt-4o-mini-nutri"
 
 client = openai.AzureOpenAI(
