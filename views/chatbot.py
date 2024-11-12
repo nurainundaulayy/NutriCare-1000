@@ -38,7 +38,7 @@ load_dotenv()  # Memuat variabel dari .env
 #     most_relevant_document_index = cosine_similarities.argmax()
 #     return documents[most_relevant_document_index]
 
-endpoint = st.secrets["https://openai-coba.openai.azure.com/"]
+endpoint = "https://openai-coba.openai.azure.com/"
 api_key = st.secrets["Adzs5iXdFibMVBIIyS4YYLRrGRID4ARastj3mRoemxZtf0o9GYx8JQQJ99AKACYeBjFXJ3w3AAABACOGxLcs"]
 deployment = "gpt-4o-mini-nutri"
 
