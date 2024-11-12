@@ -6,42 +6,53 @@ from dotenv import load_dotenv
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+
 load_dotenv()  # Memuat variabel dari .env
 
-# Konfigurasi API Key dan Endpoint dari Azure OpenAI
-openai.api_type = "azure"
-openai.api_key = os.getenv("AZURE_OPENAI_KEY")
-openai.api_base = "https://openai-coba.openai.azure.com"  # Ganti dengan endpoint Azure Anda
-openai.api_version = "2023-05-15"  # Sesuaikan versi API jika perlu
+# # Konfigurasi API Key dan Endpoint dari Azure OpenAI
+# openai.api_type = "azure"
+# openai.api_key = os.getenv("AZURE_OPENAI_KEY")
+# openai.api_base = "https://openai-coba.openai.azure.com"  # Ganti dengan endpoint Azure Anda
+# openai.api_version = "2023-05-15"  # Sesuaikan versi API jika perlu
 
-# Fungsi untuk mengekstrak teks dari file DOCX
-def extract_text_from_docx(docx_path):
-    doc = docx.Document(docx_path)
-    text = ""
-    for para in doc.paragraphs:
-        text += para.text + "\n"
-    return text
+# # Fungsi untuk mengekstrak teks dari file DOCX
+# def extract_text_from_docx(docx_path):
+#     doc = docx.Document(docx_path)
+#     text = ""
+#     for para in doc.paragraphs:
+#         text += para.text + "\n"
+#     return text
 
-# Menyiapkan dokumen DOCX yang berisi informasi gizi
-docx_file_path = "data/referensi/data1.docx"  # Ganti dengan path file DOCX Anda
-documents = extract_text_from_docx(docx_file_path).split('\n')
+# # Menyiapkan dokumen DOCX yang berisi informasi gizi
+# docx_file_path = "data/referensi/data1.docx"  # Ganti dengan path file DOCX Anda
+# documents = extract_text_from_docx(docx_file_path).split('\n')
 
-# Fungsi untuk mencari informasi relevan menggunakan pencarian berbasis TF-IDF
-def retrieve_relevant_documents(query, documents):
-    vectorizer = TfidfVectorizer()
-    tfidf_matrix = vectorizer.fit_transform(documents)
-    query_vector = vectorizer.transform([query])
+# # Fungsi untuk mencari informasi relevan menggunakan pencarian berbasis TF-IDF
+# def retrieve_relevant_documents(query, documents):
+#     vectorizer = TfidfVectorizer()
+#     tfidf_matrix = vectorizer.fit_transform(documents)
+#     query_vector = vectorizer.transform([query])
     
-    cosine_similarities = cosine_similarity(query_vector, tfidf_matrix)
+#     cosine_similarities = cosine_similarity(query_vector, tfidf_matrix)
     
-    most_relevant_document_index = cosine_similarities.argmax()
-    return documents[most_relevant_document_index]
+#     most_relevant_document_index = cosine_similarities.argmax()
+#     return documents[most_relevant_document_index]
+
+endpoint = "https://openai-coba.openai.azure.com/"
+api_key = "Adzs5iXdFibMVBIIyS4YYLRrGRID4ARastj3mRoemxZtf0o9GYx8JQQJ99AKACYeBjFXJ3w3AAABACOGxLcs"
+deployment = "gpt-4o-mini-nutri"
+
+client = openai.AzureOpenAI(
+    azure_endpoint=endpoint,
+    api_key=api_key,
+    api_version="2024-02-01",
+)
 
 # Inisialisasi pesan sistem
 system_message = {
     "role": "system",
     "content": (
-        "Jangan berikan informasi selain kesehatan ibu hamil dan menyusui. "
+        #"Jangan berikan informasi selain kesehatan ibu hamil dan menyusui. "
         "Anda adalah NutriCare1000, sebuah chatbot yang didesain khusus untuk membantu memberikan informasi seputar kesehatan "
         "dan nutrisi pada ibu hamil, ibu menyusui, janin, dan bayi selama 1000 hari pertama kehidupan anak (HPK). "
         "Tugas utama Anda adalah memberikan jawaban yang bermanfaat hanya dalam konteks kesehatan ibu hamil, ibu menyusui, "
@@ -126,14 +137,53 @@ if prompt := st.chat_input("Masukkan pertanyaan Anda"):
         with st.chat_message("assistant"):
             st.markdown(response_content)
     else:
-        # Tambahkan pesan sistem dalam konteks setiap kali memanggil API untuk pertanyaan bebas
-        response = openai.ChatCompletion.create(
-            deployment_id="gpt-4",
-            messages=[system_message] + [{"role": "user", "content": prompt}],
-            max_tokens=800
+        # # Tambahkan pencarian dokumen relevan sebelum memanggil API
+        # relevant_document = retrieve_relevant_documents(prompt, documents)
+
+        # # Gabungkan dokumen relevan dengan pertanyaan pengguna untuk memberikan konteks lebih pada model
+        # response = openai.ChatCompletion.create(
+        #     deployment_id="gpt-4",
+        #     messages=[
+        #         system_message,
+        #         {"role": "user", "content": f"{relevant_document}\n\nPertanyaan pengguna: {prompt}"}
+        #     ],
+        #     max_tokens=800
+        # )
+
+        completion = client.chat.completions.create(
+            model=deployment,
+            messages=[
+                #system_message,
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            extra_body={
+                "data_sources":[
+                    {
+                        "type": "azure_search",
+                        "parameters": {
+                            "endpoint": "https://nutri-aisearch.search.windows.net",
+                            "index_name": "datanutri",
+                            "authentication": {
+                                "type": "api_key",
+                                "key": "2LXTRHnIKOBdFOVVzMeZXh69V6kdD51nKdDF8Vt8WLAzSeDC9zdU",
+                            },
+                            "role_information": "kamu harus selalu ramah",
+                            "in_scope": False,
+                            
+                        }
+                    }
+                ],
+            }
         )
         
-        assistant_message = response['choices'][0]['message']['content']
+        # assistant_message = response['choices'][0]['message']['content']
+        # st.session_state.messages.append({"role": "assistant", "content": assistant_message})
+        # with st.chat_message("assistant"):
+        #     st.markdown(assistant_message)
+        assistant_message = completion.choices[0].message.content
         st.session_state.messages.append({"role": "assistant", "content": assistant_message})
         with st.chat_message("assistant"):
             st.markdown(assistant_message)
