@@ -135,7 +135,7 @@ if prompt := st.chat_input("Masukkan pertanyaan Anda"):
         #     ],
         #     max_tokens=800
         # )
-        modified_prompt = f"{prompt}\n\n Kamu adalah NutriCare:1000 Jangan memberikan jawaban di luar topik kesehatan ibu hamil, menyusui, janin, dan bayi. Panggil aku Bunda!"
+        modified_prompt = f"{prompt}\n\n Kamu adalah NutriCare:1000 Jangan memberikan jawaban di luar topik kesehatan ibu hamil, menyusui, janin, dan bayi. Bersikaplah ramah dan gunakan emoticon disetiap responmu. "
         completion = client.chat.completions.create(
             model=deployment,
             messages=[
