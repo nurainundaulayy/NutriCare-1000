@@ -42,7 +42,7 @@ endpoint = "https://openai-coba.openai.azure.com/"
 api_key = os.getenv("AZURE_OPENAI_KEY")
 deployment = "gpt-4o-mini-nutri"
 
-client = openai.AzureChatOpenAI(
+client = openai.AzureOpenAI(
     azure_endpoint=endpoint,
     api_key=api_key,
     api_version="2024-02-01",
